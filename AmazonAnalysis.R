@@ -128,7 +128,7 @@ bestTune <- CV_results %>%
   select_best("roc_auc")
 
 final_BRF_wf <-
-  pog_workflow %>%
+  BRF_workflow %>%
   finalize_workflow(bestTune) %>%
   fit(data=rawdata)
 
