@@ -8,6 +8,15 @@ library(tidymodels)
 library(embed)
 library(vroom)
 
+# Parallel Processing
+
+# library(doParallel)
+# parallel::detectCores() #How many cores do I have?
+# cl <- makePSOCKcluster(num_cores)
+# registerDoParallel(cl)
+# #code
+# stopCluster(cl)
+
 #Initial reading of the data
 
 rawdata <- vroom(file = "train.csv")
@@ -33,54 +42,97 @@ format_and_write <- function(predictions){
     select(Id, Action)
   
   vroom_write(final_preds,"preds.csv",delim = ",")
+  #save(file="./MyFile.RData", list=c("object1", "object2",...))
 }
 
 # Logistic Regression -----------------------------------------------------
 
-log_mod <- logistic_reg() %>%
-  set_engine("glm")
-
-log_workflow <- workflow() %>%
-  add_recipe(my_recipe) %>%
-  add_model(log_mod) %>%
-  fit(data = rawdata)
-
-log_predictions <- predict(log_workflow,
-                              new_data=test_input,
-                              type="prob")
-
-format_and_write(log_predictions)
+# log_mod <- logistic_reg() %>%
+#   set_engine("glm")
+# 
+# log_workflow <- workflow() %>%
+#   add_recipe(my_recipe) %>%
+#   add_model(log_mod) %>%
+#   fit(data = rawdata)
+# 
+# log_predictions <- predict(log_workflow,
+#                               new_data=test_input,
+#                               type="prob")
+# 
+# format_and_write(log_predictions)
 
 # Penalized Logistic Regression ------------------------------------------
 
-pog_mod <- logistic_reg(mixture=tune(), penalty=tune()) %>%
-  set_engine("glmnet")
+# pog_mod <- logistic_reg(mixture=tune(), penalty=tune()) %>%
+#   set_engine("glmnet")
+# 
+# pog_workflow <- workflow() %>%
+#   add_recipe(my_recipe) %>%
+#   add_model(pog_mod)
+# 
+# tuning_grid <- grid_regular(penalty(),
+#                             mixture(),
+#                             levels = 4)
+# 
+# folds <- vfold_cv(rawdata, v = 10, repeats=1)
+# 
+# registerDoParallel(cl)
+# CV_results <- pog_workflow %>%
+#   tune_grid(resamples=folds,
+#             grid=tuning_grid,
+#             metrics=metric_set(roc_auc))
+# stopCluster(cl)
+# 
+# bestTune <- CV_results %>%
+#   select_best("roc_auc")
+# 
+# final_pog_wf <-
+#   pog_workflow %>%
+#   finalize_workflow(bestTune) %>%
+#   fit(data=rawdata)
+# 
+# 
+# pog_predictions <- final_pog_wf %>%
+#   predict(new_data = test_input, type="prob")
+# 
+# format_and_write(pog_predictions)
 
-pog_workflow <- workflow() %>%
+# Binary RF's --------------------------------------------------------------
+
+BRF_mod <- rand_forest(mtry = tune(),
+                      min_n=tune(),
+                      trees=1000) %>%
+  set_engine("ranger") %>%
+  set_mode("classification")
+
+BRF_workflow <- workflow() %>%
   add_recipe(my_recipe) %>%
-  add_model(pog_mod)
+  add_model(BRF_mod)
 
-tuning_grid <- grid_regular(penalty(),
-                            mixture(),
+tuning_grid <- grid_regular(mtry(range=c(1,10)),
+                            min_n(),
                             levels = 4)
 
 folds <- vfold_cv(rawdata, v = 10, repeats=1)
 
-CV_results <- pog_workflow %>%
+cl <- makePSOCKcluster(10)
+registerDoParallel(cl)
+CV_results <- BRF_workflow %>%
   tune_grid(resamples=folds,
             grid=tuning_grid,
             metrics=metric_set(roc_auc))
+stopCluster(cl)
 
 bestTune <- CV_results %>%
   select_best("roc_auc")
 
-final_pog_wf <-
+final_BRF_wf <-
   pog_workflow %>%
   finalize_workflow(bestTune) %>%
   fit(data=rawdata)
 
 
-pog_predictions <- final_pog_wf %>%
+BRF_predictions <- final_BRF_wf %>%
   predict(new_data = test_input, type="prob")
 
-format_and_write(pog_predictions)
+format_and_write(BRF_predictions)
