@@ -48,7 +48,7 @@ Type 'q()' to quit R.
 ✖ dplyr::lag()      masks stats::lag()
 ✖ yardstick::spec() masks readr::spec()
 ✖ recipes::step()   masks stats::step()
-• Use suppressPackageStartupMessages() to eliminate package startup messages
+• Learn how to get started at https://www.tidymodels.org/start/
 > library(embed)
 > library(vroom)
 
@@ -165,4 +165,4 @@ dbl (10): id, RESOURCE, MGR_ID, ROLE_ROLLUP_1, ROLE_ROLLUP_2, ROLE_DEPTNAME,...
 > 
 > proc.time()
    user  system elapsed 
-568.935   2.006 269.659 
+561.197   2.244 267.104 
