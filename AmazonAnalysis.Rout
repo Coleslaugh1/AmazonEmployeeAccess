@@ -48,7 +48,121 @@ Type 'q()' to quit R.
 ✖ dplyr::lag()      masks stats::lag()
 ✖ yardstick::spec() masks readr::spec()
 ✖ recipes::step()   masks stats::step()
-• Learn how to get started at https://www.tidymodels.org/start/
+• Use suppressPackageStartupMessages() to eliminate package startup messages
 > library(embed)
-Error in library(embed) : there is no package called ‘embed’
-Execution halted
+> library(vroom)
+
+Attaching package: ‘vroom’
+
+The following object is masked from ‘package:yardstick’:
+
+    spec
+
+The following object is masked from ‘package:scales’:
+
+    col_factor
+
+The following objects are masked from ‘package:readr’:
+
+    as.col_spec, col_character, col_date, col_datetime, col_double,
+    col_factor, col_guess, col_integer, col_logical, col_number,
+    col_skip, col_time, cols, cols_condense, cols_only, date_names,
+    date_names_lang, date_names_langs, default_locale, fwf_cols,
+    fwf_empty, fwf_positions, fwf_widths, locale, output_column,
+    problems, spec
+
+> 
+> #Initial reading of the data
+> 
+> rawdata <- vroom(file = "train.csv")
+Rows: 32769 Columns: 10
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+dbl (10): ACTION, RESOURCE, MGR_ID, ROLE_ROLLUP_1, ROLE_ROLLUP_2, ROLE_DEPTN...
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+> test_input <- vroom(file = "test.csv")
+Rows: 58921 Columns: 10
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+dbl (10): id, RESOURCE, MGR_ID, ROLE_ROLLUP_1, ROLE_ROLLUP_2, ROLE_DEPTNAME,...
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+> 
+> my_recipe <- recipe(ACTION ~ ., data = rawdata) %>%
++   step_mutate_at(all_numeric_predictors(), fn = factor) %>%
++   update_role(ACTION, new_role = "outcome") %>% 
++   step_mutate(ACTION = as.factor(ACTION), skip = TRUE) %>% 
++   step_other(all_predictors(), -all_outcomes(), threshold = 0.001) %>%
++   step_lencode_mixed(all_nominal_predictors(), outcome = vars(ACTION))
+>   # step_dummy(all_nominal_predictors())
+> 
+> prep_recipe <- prep(my_recipe)
+> baked_data <- bake(prep_recipe, new_data = rawdata)
+> 
+> # Write and read function
+> 
+> format_and_write <- function(predictions){
++   final_preds <- predictions %>% 
++     mutate(Action = .pred_1) %>% 
++     mutate(Id = c(1:length(.pred_1))) %>% 
++     select(Id, Action)
++   
++   vroom_write(final_preds,"preds.csv",delim = ",")
++ }
+> 
+> # Logistic Regression -----------------------------------------------------
+> 
+> log_mod <- logistic_reg() %>%
++   set_engine("glm")
+> 
+> log_workflow <- workflow() %>%
++   add_recipe(my_recipe) %>%
++   add_model(log_mod) %>%
++   fit(data = rawdata)
+> 
+> log_predictions <- predict(log_workflow,
++                               new_data=test_input,
++                               type="prob")
+> 
+> format_and_write(log_predictions)
+> 
+> # Penalized Logistic Regression ------------------------------------------
+> 
+> pog_mod <- logistic_reg(mixture=tune(), penalty=tune()) %>%
++   set_engine("glmnet")
+> 
+> pog_workflow <- workflow() %>%
++   add_recipe(my_recipe) %>%
++   add_model(pog_mod)
+> 
+> tuning_grid <- grid_regular(penalty(),
++                             mixture(),
++                             levels = 4)
+> 
+> folds <- vfold_cv(rawdata, v = 10, repeats=1)
+> 
+> CV_results <- pog_workflow %>%
++   tune_grid(resamples=folds,
++             grid=tuning_grid,
++             metrics=metric_set(roc_auc))
+> 
+> bestTune <- CV_results %>%
++   select_best("roc_auc")
+> 
+> final_pog_wf <-
++   pog_workflow %>%
++   finalize_workflow(bestTune) %>%
++   fit(data=rawdata)
+> 
+> 
+> pog_predictions <- final_pog_wf %>%
++   predict(new_data = test_input, type="prob")
+> 
+> format_and_write(pog_predictions)
+> 
+> proc.time()
+   user  system elapsed 
+568.935   2.006 269.659 
