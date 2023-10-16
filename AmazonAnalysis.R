@@ -7,6 +7,7 @@ library(tidyverse)
 library(tidymodels)
 library(embed)
 library(vroom)
+library(doParallel)
 
 # Parallel Processing
 
