@@ -145,7 +145,7 @@ nb_model <- naive_Bayes(Laplace=tune(), smoothness=tune()) %>%
   set_mode("classification") %>%
   set_engine("naivebayes")
 
-nb_wf <- workflow() %>%
+nb_workflow <- workflow() %>%
   add_recipe(my_recipe) %>%
   add_model(nb_model)
 
