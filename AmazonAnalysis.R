@@ -8,6 +8,7 @@ library(tidymodels)
 library(embed)
 library(vroom)
 library(doParallel)
+library(discrim)
 
 # Parallel Processing
 
@@ -100,25 +101,63 @@ format_and_write <- function(predictions){
 
 # Binary RF's --------------------------------------------------------------
 
-BRF_mod <- rand_forest(mtry = tune(),
-                      min_n=tune(),
-                      trees=1000) %>%
-  set_engine("ranger") %>%
-  set_mode("classification")
+# BRF_mod <- rand_forest(mtry = tune(),
+#                       min_n=tune(),
+#                       trees=1000) %>%
+#   set_engine("ranger") %>%
+#   set_mode("classification")
+# 
+# BRF_workflow <- workflow() %>%
+#   add_recipe(my_recipe) %>%
+#   add_model(BRF_mod)
+# 
+# tuning_grid <- grid_regular(mtry(range=c(1,10)),
+#                             min_n(),
+#                             levels = 4)
+# 
+# folds <- vfold_cv(rawdata, v = 10, repeats=1)
+# 
+# cl <- makePSOCKcluster(10)
+# registerDoParallel(cl)
+# CV_results <- BRF_workflow %>%
+#   tune_grid(resamples=folds,
+#             grid=tuning_grid,
+#             metrics=metric_set(roc_auc))
+# stopCluster(cl)
+# 
+# bestTune <- CV_results %>%
+#   select_best("roc_auc")
+# 
+# final_BRF_wf <-
+#   BRF_workflow %>%
+#   finalize_workflow(bestTune) %>%
+#   fit(data=rawdata)
+# 
+# 
+# BRF_predictions <- final_BRF_wf %>%
+#   predict(new_data = test_input, type="prob")
+# 
+# format_and_write(BRF_predictions)
 
-BRF_workflow <- workflow() %>%
+# Naive Bayes -------------------------------------------------------------
+
+nb_model <- naive_Bayes(Laplace=tune(), smoothness=tune()) %>%
+  set_mode("classification") %>%
+  set_engine("naivebayes")
+
+nb_wf <- workflow() %>%
   add_recipe(my_recipe) %>%
-  add_model(BRF_mod)
+  add_model(nb_model)
 
-tuning_grid <- grid_regular(mtry(range=c(1,10)),
-                            min_n(),
+tuning_grid <- grid_regular(Laplace(),
+                            smoothness(),
                             levels = 4)
 
 folds <- vfold_cv(rawdata, v = 10, repeats=1)
 
 cl <- makePSOCKcluster(10)
 registerDoParallel(cl)
-CV_results <- BRF_workflow %>%
+CV_results <- nb_workflow %>%
   tune_grid(resamples=folds,
             grid=tuning_grid,
             metrics=metric_set(roc_auc))
@@ -127,13 +166,13 @@ stopCluster(cl)
 bestTune <- CV_results %>%
   select_best("roc_auc")
 
-final_BRF_wf <-
-  BRF_workflow %>%
+final_nb_wf <-
+  nb_workflow %>%
   finalize_workflow(bestTune) %>%
   fit(data=rawdata)
 
 
-BRF_predictions <- final_BRF_wf %>%
+nb_predictions <- final_nb_wf %>%
   predict(new_data = test_input, type="prob")
 
-format_and_write(BRF_predictions)
+format_and_write(nb_predictions)
