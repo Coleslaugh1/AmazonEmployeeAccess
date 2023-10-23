@@ -145,60 +145,23 @@ format_and_write <- function(predictions){
 
 # Naive Bayes -------------------------------------------------------------
 
-nb_model <- naive_Bayes(Laplace=tune(), smoothness=tune()) %>%
-  set_mode("classification") %>%
-  set_engine("naivebayes")
-
-nb_workflow <- workflow() %>%
-  add_recipe(my_recipe) %>%
-  add_model(nb_model)
-
-tuning_grid <- grid_regular(Laplace(),
-                            smoothness(),
-                            levels = 4)
-
-folds <- vfold_cv(rawdata, v = 10, repeats=1)
-
-cl <- makePSOCKcluster(10)
-registerDoParallel(cl)
-CV_results <- nb_workflow %>%
-  tune_grid(resamples=folds,
-            grid=tuning_grid,
-            metrics=metric_set(roc_auc))
-stopCluster(cl)
-
-bestTune <- CV_results %>%
-  select_best("roc_auc")
-
-final_nb_wf <-
-  nb_workflow %>%
-  finalize_workflow(bestTune) %>%
-  fit(data=rawdata)
-
-
-nb_predictions <- final_nb_wf %>%
-  predict(new_data = test_input, type="prob")
-
-format_and_write(nb_predictions)
-
-# KNN ---------------------------------------------------------------------
-
-# knn_model <- nearest_neighbor(neighbors=tune()) %>% # set or tune
+# nb_model <- naive_Bayes(Laplace=tune(), smoothness=tune()) %>%
 #   set_mode("classification") %>%
-#   set_engine("kknn")
+#   set_engine("naivebayes")
 # 
-# knn_workflow <- workflow() %>%
+# nb_workflow <- workflow() %>%
 #   add_recipe(my_recipe) %>%
-#   add_model(knn_model)
+#   add_model(nb_model)
 # 
-# tuning_grid <- grid_regular(neighbors(),
+# tuning_grid <- grid_regular(Laplace(),
+#                             smoothness(),
 #                             levels = 4)
 # 
 # folds <- vfold_cv(rawdata, v = 10, repeats=1)
 # 
 # cl <- makePSOCKcluster(10)
 # registerDoParallel(cl)
-# CV_results <- knn_workflow %>%
+# CV_results <- nb_workflow %>%
 #   tune_grid(resamples=folds,
 #             grid=tuning_grid,
 #             metrics=metric_set(roc_auc))
@@ -207,13 +170,50 @@ format_and_write(nb_predictions)
 # bestTune <- CV_results %>%
 #   select_best("roc_auc")
 # 
-# final_knn_wf <-
-#   knn_workflow %>%
+# final_nb_wf <-
+#   nb_workflow %>%
 #   finalize_workflow(bestTune) %>%
 #   fit(data=rawdata)
 # 
 # 
-# knn_predictions <- final_knn_wf %>%
+# nb_predictions <- final_nb_wf %>%
 #   predict(new_data = test_input, type="prob")
 # 
-# format_and_write(knn_predictions)
+# format_and_write(nb_predictions)
+
+# KNN ---------------------------------------------------------------------
+
+knn_model <- nearest_neighbor(neighbors=tune()) %>% # set or tune
+  set_mode("classification") %>%
+  set_engine("kknn")
+
+knn_workflow <- workflow() %>%
+  add_recipe(my_recipe) %>%
+  add_model(knn_model)
+
+tuning_grid <- grid_regular(neighbors(),
+                            levels = 4)
+
+folds <- vfold_cv(rawdata, v = 10, repeats=1)
+
+cl <- makePSOCKcluster(10)
+registerDoParallel(cl)
+CV_results <- knn_workflow %>%
+  tune_grid(resamples=folds,
+            grid=tuning_grid,
+            metrics=metric_set(roc_auc))
+stopCluster(cl)
+
+bestTune <- CV_results %>%
+  select_best("roc_auc")
+
+final_knn_wf <-
+  knn_workflow %>%
+  finalize_workflow(bestTune) %>%
+  fit(data=rawdata)
+
+
+knn_predictions <- final_knn_wf %>%
+  predict(new_data = test_input, type="prob")
+
+format_and_write(knn_predictions)
