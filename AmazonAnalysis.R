@@ -220,7 +220,7 @@ format_and_write <- function(predictions){
 
 # Support Vector Machines -------------------------------------------------
 
-svm_model <- svm_linear(cost=tune()) %>% # set or tune
+svm_model <- svm_rbf(rbf_sigma=tune(), cost=tune()) %>% # set or tune
   set_mode("classification") %>%
   set_engine("kernlab")
 
@@ -228,12 +228,13 @@ svm_workflow <- workflow() %>%
   add_recipe(my_recipe) %>%
   add_model(svm_model)
 
-tuning_grid <- grid_regular(cost(),
+tuning_grid <- grid_regular(rbf_sigma(), 
+                            cost(),
                             levels = 4)
 
 folds <- vfold_cv(rawdata, v = 10, repeats=1)
 
-cl <- makePSOCKcluster(10)
+cl <- makePSOCKcluster(20)
 registerDoParallel(cl)
 CV_results <- svm_workflow %>%
   tune_grid(resamples=folds,
