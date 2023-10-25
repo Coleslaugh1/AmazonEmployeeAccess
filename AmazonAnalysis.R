@@ -183,6 +183,43 @@ format_and_write <- function(predictions){
 
 # KNN ---------------------------------------------------------------------
 
+# knn_model <- nearest_neighbor(neighbors=tune()) %>% # set or tune
+#   set_mode("classification") %>%
+#   set_engine("kknn")
+# 
+# knn_workflow <- workflow() %>%
+#   add_recipe(my_recipe) %>%
+#   add_model(knn_model)
+# 
+# tuning_grid <- grid_regular(neighbors(),
+#                             levels = 4)
+# 
+# folds <- vfold_cv(rawdata, v = 10, repeats=1)
+# 
+# cl <- makePSOCKcluster(10)
+# registerDoParallel(cl)
+# CV_results <- knn_workflow %>%
+#   tune_grid(resamples=folds,
+#             grid=tuning_grid,
+#             metrics=metric_set(roc_auc))
+# stopCluster(cl)
+# 
+# bestTune <- CV_results %>%
+#   select_best("roc_auc")
+# 
+# final_knn_wf <-
+#   knn_workflow %>%
+#   finalize_workflow(bestTune) %>%
+#   fit(data=rawdata)
+# 
+# 
+# knn_predictions <- final_knn_wf %>%
+#   predict(new_data = test_input, type="prob")
+# 
+# format_and_write(knn_predictions)
+
+# Support Vector Machines -------------------------------------------------
+
 knn_model <- nearest_neighbor(neighbors=tune()) %>% # set or tune
   set_mode("classification") %>%
   set_engine("kknn")
