@@ -220,7 +220,7 @@ format_and_write <- function(predictions){
 
 # Support Vector Machines -------------------------------------------------
 
-svm_model <- svm_poly(degree=tune(), cost=tune()) %>% # set or tune
+svm_model <- svm_linear(cost=tune()) %>% # set or tune
   set_mode("classification") %>%
   set_engine("kernlab")
 
@@ -229,7 +229,6 @@ svm_workflow <- workflow() %>%
   add_model(svm_model)
 
 tuning_grid <- grid_regular(cost(),
-                            degree(),
                             levels = 4)
 
 folds <- vfold_cv(rawdata, v = 10, repeats=1)
