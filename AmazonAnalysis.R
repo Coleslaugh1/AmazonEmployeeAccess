@@ -83,6 +83,7 @@ tuning_grid <- grid_regular(penalty(),
 
 folds <- vfold_cv(rawdata, v = 10, repeats=1)
 
+cl <- makePSOCKcluster(10)
 registerDoParallel(cl)
 CV_results <- pog_workflow %>%
   tune_grid(resamples=folds,
