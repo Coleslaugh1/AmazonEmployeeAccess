@@ -54,19 +54,19 @@ format_and_write <- function(predictions, file){
 
 # Logistic Regression -----------------------------------------------------
 
-log_mod <- logistic_reg() %>%
-  set_engine("glm")
-
-log_workflow <- workflow() %>%
-  add_recipe(my_recipe) %>%
-  add_model(log_mod) %>%
-  fit(data = rawdata)
-
-log_predictions <- predict(log_workflow,
-                              new_data=test_input,
-                              type="prob")
-
-format_and_write(log_predictions, "log_preds.csv")
+# log_mod <- logistic_reg() %>%
+#   set_engine("glm")
+# 
+# log_workflow <- workflow() %>%
+#   add_recipe(my_recipe) %>%
+#   add_model(log_mod) %>%
+#   fit(data = rawdata)
+# 
+# log_predictions <- predict(log_workflow,
+#                               new_data=test_input,
+#                               type="prob")
+# 
+# format_and_write(log_predictions, "log_preds.csv")
 
 # Penalized Logistic Regression ------------------------------------------
 
