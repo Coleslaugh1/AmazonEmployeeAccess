@@ -108,43 +108,43 @@ format_and_write <- function(predictions, file){
 
 # Binary RF's --------------------------------------------------------------
 
-# BRF_mod <- rand_forest(mtry = tune(),
-#                       min_n=tune(),
-#                       trees=1000) %>%
-#   set_engine("ranger") %>%
-#   set_mode("classification")
-# 
-# BRF_workflow <- workflow() %>%
-#   add_recipe(my_recipe) %>%
-#   add_model(BRF_mod)
-# 
-# tuning_grid <- grid_regular(mtry(range=c(1,10)),
-#                             min_n(),
-#                             levels = 4)
-# 
-# folds <- vfold_cv(rawdata, v = 10, repeats=1)
-# 
-# cl <- makePSOCKcluster(10)
-# registerDoParallel(cl)
-# CV_results <- BRF_workflow %>%
-#   tune_grid(resamples=folds,
-#             grid=tuning_grid,
-#             metrics=metric_set(roc_auc))
-# stopCluster(cl)
-# 
-# bestTune <- CV_results %>%
-#   select_best("roc_auc")
-# 
-# final_BRF_wf <-
-#   BRF_workflow %>%
-#   finalize_workflow(bestTune) %>%
-#   fit(data=rawdata)
-# 
-# 
-# BRF_predictions <- final_BRF_wf %>%
-#   predict(new_data = test_input, type="prob")
-# 
-# format_and_write(BRF_predictions, "rf_preds.csv")
+BRF_mod <- rand_forest(mtry = tune(),
+                      min_n=tune(),
+                      trees=1000) %>%
+  set_engine("ranger") %>%
+  set_mode("classification")
+
+BRF_workflow <- workflow() %>%
+  add_recipe(my_recipe) %>%
+  add_model(BRF_mod)
+
+tuning_grid <- grid_regular(mtry(range=c(1,10)),
+                            min_n(),
+                            levels = 4)
+
+folds <- vfold_cv(rawdata, v = 10, repeats=1)
+
+cl <- makePSOCKcluster(10)
+registerDoParallel(cl)
+CV_results <- BRF_workflow %>%
+  tune_grid(resamples=folds,
+            grid=tuning_grid,
+            metrics=metric_set(roc_auc))
+stopCluster(cl)
+
+bestTune <- CV_results %>%
+  select_best("roc_auc")
+
+final_BRF_wf <-
+  BRF_workflow %>%
+  finalize_workflow(bestTune) %>%
+  fit(data=rawdata)
+
+
+BRF_predictions <- final_BRF_wf %>%
+  predict(new_data = test_input, type="prob")
+
+format_and_write(BRF_predictions, "rf_preds1.csv")
 
 # Naive Bayes -------------------------------------------------------------
 
@@ -261,66 +261,66 @@ format_and_write <- function(predictions, file){
 
 # Stacked -----------------------------------------------------------------
 
-untunedModel <- control_stack_grid()
-tunedModel <- control_stack_resamples()
-folds <- vfold_cv(rawdata, v = 10, repeats=1)
-
-BRF_mod <- rand_forest(mtry = tune(),
-                       min_n=tune(),
-                       trees=1000) %>%
-  set_engine("ranger") %>%
-  set_mode("classification")
-
-BRF_workflow <- workflow() %>%
-  add_recipe(my_recipe) %>%
-  add_model(BRF_mod)
-
-tuning_grid <- grid_regular(mtry(range=c(1,10)),
-                            min_n(),
-                            levels = 4)
-
-cl <- makePSOCKcluster(10)
-registerDoParallel(cl)
-CV_results_rf <- BRF_workflow %>%
-  tune_grid(resamples=folds,
-            grid=tuning_grid,
-            metrics=metric_set(roc_auc),
-            control = untunedModel)
-stopCluster(cl)
-
-pog_mod <- logistic_reg(mixture=tune(), penalty=tune()) %>%
-  set_engine("glmnet")
-
-pog_workflow <- workflow() %>%
-  add_recipe(my_recipe) %>%
-  add_model(pog_mod)
-
-tuning_grid <- grid_regular(penalty(),
-                            mixture(),
-                            levels = 4)
-
-folds <- vfold_cv(rawdata, v = 10, repeats=1)
-
-cl <- makePSOCKcluster(10)
-registerDoParallel(cl)
-CV_results_pog <- pog_workflow %>%
-  tune_grid(resamples=folds,
-            grid=tuning_grid,
-            metrics=metric_set(roc_auc),
-            control = tunedModel)
-stopCluster(cl)
-
-my_stack <- stacks() %>%
-  add_candidates(CV_results_rf) %>%
-  add_candidates(CV_results_pog)
-
-stack_mod <- my_stack %>%
-  blend_predictions() %>% # LASSO penalized regression meta-learner10
-  fit_members()
-
-stackData <- as_tibble(my_stack)
-
-stack_predictions <- stack_mod %>%
-  predict(new_data = test_input, type="prob")
-
-format_and_write(stack_predictions, "stack_preds.csv")
+# untunedModel <- control_stack_grid()
+# tunedModel <- control_stack_resamples()
+# folds <- vfold_cv(rawdata, v = 10, repeats=1)
+# 
+# BRF_mod <- rand_forest(mtry = tune(),
+#                        min_n=tune(),
+#                        trees=1000) %>%
+#   set_engine("ranger") %>%
+#   set_mode("classification")
+# 
+# BRF_workflow <- workflow() %>%
+#   add_recipe(my_recipe) %>%
+#   add_model(BRF_mod)
+# 
+# tuning_grid <- grid_regular(mtry(range=c(1,10)),
+#                             min_n(),
+#                             levels = 4)
+# 
+# cl <- makePSOCKcluster(10)
+# registerDoParallel(cl)
+# CV_results_rf <- BRF_workflow %>%
+#   tune_grid(resamples=folds,
+#             grid=tuning_grid,
+#             metrics=metric_set(roc_auc),
+#             control = untunedModel)
+# stopCluster(cl)
+# 
+# pog_mod <- logistic_reg(mixture=tune(), penalty=tune()) %>%
+#   set_engine("glmnet")
+# 
+# pog_workflow <- workflow() %>%
+#   add_recipe(my_recipe) %>%
+#   add_model(pog_mod)
+# 
+# tuning_grid <- grid_regular(penalty(),
+#                             mixture(),
+#                             levels = 4)
+# 
+# folds <- vfold_cv(rawdata, v = 10, repeats=1)
+# 
+# cl <- makePSOCKcluster(10)
+# registerDoParallel(cl)
+# CV_results_pog <- pog_workflow %>%
+#   tune_grid(resamples=folds,
+#             grid=tuning_grid,
+#             metrics=metric_set(roc_auc),
+#             control = tunedModel)
+# stopCluster(cl)
+# 
+# my_stack <- stacks() %>%
+#   add_candidates(CV_results_rf) %>%
+#   add_candidates(CV_results_pog)
+# 
+# stack_mod <- my_stack %>%
+#   blend_predictions() %>% # LASSO penalized regression meta-learner10
+#   fit_members()
+# 
+# stackData <- as_tibble(my_stack)
+# 
+# stack_predictions <- stack_mod %>%
+#   predict(new_data = test_input, type="prob")
+# 
+# format_and_write(stack_predictions, "stack_preds.csv")
