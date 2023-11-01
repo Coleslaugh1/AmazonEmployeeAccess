@@ -124,13 +124,13 @@ tuning_grid <- grid_regular(mtry(range=c(1,10)),
 
 folds <- vfold_cv(rawdata, v = 10, repeats=1)
 
-cl <- makePSOCKcluster(10)
-registerDoParallel(cl)
+#cl <- makePSOCKcluster(10)
+#registerDoParallel(cl)
 CV_results <- BRF_workflow %>%
   tune_grid(resamples=folds,
             grid=tuning_grid,
             metrics=metric_set(roc_auc))
-stopCluster(cl)
+#stopCluster(cl)
 
 bestTune <- CV_results %>%
   select_best("roc_auc")
@@ -144,7 +144,7 @@ final_BRF_wf <-
 BRF_predictions <- final_BRF_wf %>%
   predict(new_data = test_input, type="prob")
 
-format_and_write(BRF_predictions, "rf_preds1.csv")
+format_and_write(BRF_predictions, "rf_preds2.csv")
 
 # Naive Bayes -------------------------------------------------------------
 
