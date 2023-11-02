@@ -144,7 +144,7 @@ final_BRF_wf <-
 BRF_predictions <- final_BRF_wf %>%
   predict(new_data = test_input, type="prob")
 
-format_and_write(BRF_predictions, "rf_preds3.csv")
+format_and_write(BRF_predictions, "rf_preds2.csv")
 
 # Naive Bayes -------------------------------------------------------------
 
