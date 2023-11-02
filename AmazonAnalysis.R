@@ -124,13 +124,13 @@ tuning_grid <- grid_regular(mtry(range=c(1,10)),
 
 folds <- vfold_cv(rawdata, v = 10, repeats=1)
 
-#cl <- makePSOCKcluster(10)
-#registerDoParallel(cl)
+cl <- makePSOCKcluster(10)
+registerDoParallel(cl)
 CV_results <- BRF_workflow %>%
   tune_grid(resamples=folds,
             grid=tuning_grid,
             metrics=metric_set(roc_auc))
-#stopCluster(cl)
+stopCluster(cl)
 
 bestTune <- CV_results %>%
   select_best("roc_auc")
